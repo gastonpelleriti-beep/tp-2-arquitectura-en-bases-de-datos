@@ -1,0 +1,133 @@
+ACTIVIDAD INTEGRADORA - ARQUITECTURA DE BASE DE DATOS
+Alumno: ________________________  Fecha: 25/11/2026
+=========================================================
+
+PREGUNTA 1:
+la respuesta correcta seria la A, ya que el Turno se considere una entidad propia con sus propios atributos (Fecha, Hora, Motivo), ya que esto permite manejar múltiples citas entre un mismo paciente y un médico de forma ordenada.
+
+---------------------------------------------------------
+
+PREGUNTA 2:
+Pregunta 1: Modelado de un caso real
+
+a) Entidades, atributos y relaciones:
+
+Paciente: DNI (Clave Primaria), Nombre, ObraSocial.
+
+Médico: Matrícula (Clave Primaria), Nombre, Especialidad.
+
+Turno: ID_Turno (Clave Primaria), FechaHora, Motivo, DNI (Clave Foránea), Matrícula (Clave Foránea).
+
+Relaciones: Un paciente saca un turno y un médico atiende un turno.
+
+b) Cardinalidades:
+
+Paciente - Turno (1:N): Un paciente puede sacar muchos turnos, pero cada turno pertenece a un único paciente.
+
+Médico - Turno (1:N): Un médico puede atender muchos turnos, pero cada turno es atendido por un único médico.
+
+Pregunta 2: Normalización (1FN y 2FN)
+
+a) ¿Por qué Nombre_Alumno viola la Segunda Forma Normal (2FN)?
+Porque la clave primaria de la tabla es compuesta por ID_Alumno y ID_Materia, pero Nombre_Alumno depende únicamente de una parte de esa clave (ID_Alumno) y no de la clave completa. Esto genera una dependencia parcial, haciendo que el nombre del alumno se repita innecesariamente por cada materia.
+
+b) Tablas normalizadas hasta 2FN:
+
+ALUMNO (ID_Alumno [Clave Primaria], Nombre_Alumno)
+
+MATERIA (ID_Materia [Clave Primaria], Nombre_Materia)
+
+INSCRIPCION (ID_Alumno [Clave Primaria y Foránea], ID_Materia [Clave Primaria y Foránea], Nota)
+
+---------------------------------------------------------
+
+PREGUNTA 3:
+Diferencia entre Integridad de Entidad e Integridad Referencial:
+La integridad de entidad es básicamente la regla que hace que cada fila o registro de una tabla sea único. Esto se logra con la clave primaria, lo que evita que se repita o que quede vacía.
+
+Por otro lado, la integridad referencial es la que cuida que las relaciones entre las tablas no se rompan. Se asegura de que una clave foránea siempre apunte a un registro que sí exista en la tabla principal, para que no queden datos sueltos o "huérfanos".
+
+Ejemplo aplicado a las tablas de la Pregunta 2 (ALUMNO, MATERIA e INSCRIPCION):
+
+Integridad de entidad: En la tabla ALUMNO, el ID_Alumno es la clave primaria. Gracias a esto, la base de datos no me deja poner dos alumnos con el mismo ID ni dejar ese campo en blanco.
+
+Integridad referencial: En la tabla INSCRIPCION, el ID_Alumno es clave foránea. Si en algún momento intento anotar a un alumno con un ID que ni siquiera está registrado en la tabla ALUMNO, la base de datos rechaza la operación para que no haya errores de datos.
+
+---------------------------------------------------------
+
+PREGUNTA 4:
+a) Sentencia SQL para crear la tabla TURNO:
+CREATE TABLE TURNO (
+ID_Turno INT PRIMARY KEY,
+FechaHora DATETIME,
+Motivo VARCHAR(100),
+ID_Paciente INT,
+ID_Medico INT
+);
+
+b) Sentencia SQL para modificar la tabla y agregar la columna Estado:
+ALTER TABLE TURNO ADD Estado VARCHAR(50);
+
+---------------------------------------------------------
+
+PREGUNTA 5:
+SELECT PACIENTE.Nombre AS Nombre_Paciente, TURNO.FechaHora, MEDICO.Nombre AS Nombre_Medico
+FROM TURNO
+JOIN PACIENTE ON TURNO.DNI = PACIENTE.DNI
+JOIN MEDICO ON TURNO.Matrícula = MEDICO.Matrícula
+WHERE TURNO.FechaHora < CURRENT_TIMESTAMP;
+
+---------------------------------------------------------
+
+PREGUNTA 6:
+a) El Procesador de Consultas:
+Es la parte del motor de base de datos que se encarga de agarrar la consulta SQL que escribimos, revisarla, armar el mejor plan posible para ejecutarla (buscando la forma más rápida y eficiente de buscar la información) y después correrla para devolvernos los resultados.
+
+b) El Catálogo de Datos (Diccionario de datos):
+Es básicamente el lugar donde el sistema guarda toda la información sobre la base de datos misma (o sea, los metadatos). Ahí tiene anotado qué tablas existen, qué columnas tiene cada una, qué tipos de datos son, cuáles son las claves primarias o foráneas y los permisos. El motor lo consulta todo el tiempo para saber cómo está armada la estructura.
+
+---------------------------------------------------------
+
+PREGUNTA 7:
+Atomicidad: O se hace todo o no se hace nada. Si al sistema se le ocurre fallar justo después de descontar los 10.000 de la Cuenta A pero antes de sumarlos a la B, la base de datos deshace todo (rollback) para que la plata no quede flotando ni se pierda en el camino.
+
+Consistencia: La operación respeta todas las reglas del sistema bancario. Por ejemplo, se asegura de que la plata total entre las dos cuentas se mantenga (no se crea ni desaparece dinero mágicamente) y que las cuentas existan.
+
+Aislamiento: Si hay varias operaciones pasando al mismo tiempo (como alguien consultando el saldo de la Cuenta A justo en el segundo que se hace la transferencia), el sistema evita que se mezclen o interfieran entre sí, haciendo que cada transacción parezca que corre sola.
+
+Durabilidad: Una vez que el sistema me confirma que la transferencia se hizo, los datos quedan grabados de forma permanente. Si después de eso se apaga el servidor o hay un corte de luz, la plata ya está segura en la Cuenta B y no se va a perder.
+
+---------------------------------------------------------
+
+PREGUNTA 8:
+¿Qué es un "bloqueo" (lock) y por qué es necesario?
+Un bloqueo es básicamente un mecanismo que usa la base de datos para "frenar" o restringir el acceso a ciertos datos (como una tabla o una fila específica) mientras una transacción los está usando o modificando. Es necesario porque cuando hay varios usuarios o procesos queriendo leer o escribir al mismo tiempo, si no hay orden, se pueden pisar los datos o generar errores graves de consistencia. El bloqueo se encarga de poner un "cartel de ocupado" para organizar quién entra y cuándo.
+
+Problema clásico de concurrencia que ayudan a prevenir:
+Un ejemplo clásico es la "actualización perdida" (lost update). Esto pasa cuando dos usuarios leen un mismo dato al mismo tiempo (por ejemplo, el stock de un producto que es 10), los dos calculan un cambio por su cuenta y lo guardan. Como operaron al mismo tiempo sin bloquearse, uno le pisa el cambio al otro y la modificación se pierde. Con los bloqueos, el primer usuario bloquea el registro hasta terminar su operación, obligando al segundo a esperar a que se actualice bien el valor.
+
+---------------------------------------------------------
+
+PREGUNTA 9:
+Organizar las tablas en esquemas (como ventas y rrhh) es una muy buena práctica por varias razones:
+
+Orden y modularidad: Te permite agrupar lógicamente las tablas según el área o la funcionalidad del sistema. Así, todo lo relacionado con personal queda en un esquema y lo de ventas en otro, lo que evita tener un caos de tablas sueltas en la base de datos principal.
+
+Seguridad y permisos: Facilita muchísimo la gestión de accesos. Por ejemplo, podés darle permisos al equipo de Recursos Humanos para que solo pueda ver y modificar las tablas del esquema rrhh, sin necesidad de darles acceso a las de ventas.
+
+Evita colisiones de nombres: Funciona como carpetas separadas, lo que ayuda a que no se te mezclen las cosas y te permite organizar mejor los objetos si distintas áreas manejan nombres similares.
+
+Mantenimiento: Hace que sea más fácil hacer respaldos (backups), tareas de mantenimiento o migraciones por sectores, en lugar de tener que manejar todo junto en un solo bloque gigante.
+
+
+---------------------------------------------------------
+
+PREGUNTA 10:
+a) ¿Qué es un índice y cómo ayuda al motor de almacenamiento?
+Un índice es básicamente como el índice de un libro, pero para la base de datos. En vez de ponerse a revisar tabla por tabla o fila por fila desde el principio hasta el final para encontrar un dato (lo que se llama un recorrido completo o table scan), el motor de la base de datos usa esta estructura ordenada —por lo general un árbol B o B+— para ubicar la fila de forma directa y rapidísima. Ayuda un montón a mejorar el rendimiento, sobre todo cuando hacemos búsquedas, filtros o en este caso los JOIN, porque evita que el motor pierda tiempo buscando a ciegas.
+
+b) Sentencia SQL para crear un índice simple en la columna ID_Paciente de la tabla TURNO:
+CREATE INDEX idx_turno_paciente ON TURNO (ID_Paciente);
+
+---------------------------------------------------------
+
